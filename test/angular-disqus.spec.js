@@ -166,7 +166,7 @@ describe('Angular-disqus', function() {
       $disqus.commit = jasmine.createSpy('commit call spy');
       compileHtml('<div disqus="\'test-id\'"></div>');
 
-      expect($disqus.commit).toHaveBeenCalledWith('test-id');
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', undefined);
     }));
 
     it('should trigger commit if id changes', inject(function($window, $disqus, $rootScope) {
@@ -177,7 +177,19 @@ describe('Angular-disqus', function() {
       $rootScope.id = 'hello-kitty';
       $rootScope.$apply();
 
-      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty');
+      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty', undefined);
+    }));
+      
+    it('should trigger commit with title if it is defined', inject(function($window, $disqus, $rootScope) {
+      $disqus.commit = jasmine.createSpy('commit call spy');
+      $rootScope.id = 'test-id';
+      $rootScope.title = 'Nice long title';
+      compileHtml('<div disqus="id" title="title"></div>');
+
+      $rootScope.id = 'hello-kitty';
+      $rootScope.$apply();
+
+      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty', "Nice long title");
     }));
 
   });
