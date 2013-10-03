@@ -88,11 +88,13 @@
      * @param {String} url disqus url
      * @param {String} shortname disqus shortname
      * @param {Object} disqusSsoCredentials config for SSO
+     * @param  {String} title thread title
      */
-    function setGlobals(id, url, shortname, disqusSsoCredentials) {
+    function setGlobals(id, url, shortname, disqusSsoCredentials, title) {
       window.disqus_identifier = id;
       window.disqus_url        = url;
       window.disqus_shortname  = shortname;
+      window.disqus_title = title;
       if(disqusSsoCredentials){
         window.disqus_config  = function() {
           this.page.remote_auth_s3 = disqusSsoCredentials.auth;
@@ -105,11 +107,13 @@
      * Trigger the reset comment call
      * @param  {String} threadUrl thread page url
      * @param  {String} id Thread id
+     * @param  {String} title thread title
      */
-    function resetCommit(threadUrl, id) {
+    function resetCommit(threadUrl, id, title) {
       window.DISQUS.reset({
         reload: true,
         config : function() {
+          this.page.title = title;
           this.page.identifier = id;
           this.page.url        = threadUrl;
         }
@@ -123,8 +127,9 @@
      * @param {Object} threadUrl thread page url
      * @param {String} id disqus thread id
      * @param {Object} disqusSsoCredentials config for SSO
+     * @param  {String} title thread title
      */
-    function buildCommit(threadUrl, id, disqusSsoCredentials) {
+    function buildCommit(threadUrl, id, disqusSsoCredentials, title) {
       var shortname = getShortname(),
           container = getScriptContainer();
 
@@ -135,7 +140,7 @@
       }
 
       // Writes disqus global
-      setGlobals(id, threadUrl, shortname, disqusSsoCredentials);
+      setGlobals(id, threadUrl, shortname, disqusSsoCredentials, title);
 
       // Build the script tag and append it to container
       container.appendChild(buildScriptTag(shortname));
@@ -159,16 +164,17 @@
        *
        * @param  {String} id required thread id
        * @param  {String?} threadUrl optional url for the thread, if empty disqus will use current absolute url for thread identification
+       * @param  {String} title thread title
        */
-      function commit(id, threadUrl) {
+      function commit(id, threadUrl, title) {
         if (!angular.isDefined(getShortname())) {
           throw new Error('No disqus shortname defined');
         } else if (!angular.isDefined(id)) {
           throw new Error('No disqus thread id defined');
         } else if (angular.isDefined(window.DISQUS)) {
-          resetCommit(threadUrl || $location.absUrl(), id);
+          resetCommit(threadUrl || $location.absUrl(), id, title);
         } else {
-          buildCommit(threadUrl || $location.absUrl(), id, $disqusSsoConfig.getCredentials());
+          buildCommit(threadUrl || $location.absUrl(), id, $disqusSsoConfig.getCredentials(), title);
         }
       }
 
@@ -187,13 +193,14 @@
       replace  : true,
       scope    : {
         id : '=disqus',
-        threadUrl: '@'
+        threadUrl: '@',
+        title : '@'
       },
       template : '<div id="disqus_thread"></div>',
       link: function link(scope, element, attr) {
         scope.$watch('id', function(id) {
           if (angular.isDefined(id)) {
-            $disqus.commit(id, scope.threadUrl);
+            $disqus.commit(id, scope.threadUrl, scope.title);
           }
         });
       }

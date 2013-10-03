@@ -30,6 +30,11 @@ Add comments to threads by using the ```disqus``` directive
     <div class="disqus : id"></div>
 ```
 
+You can specify title for threads:
+```
+    <div disqus="id" title="thread title"></div>
+```
+
 
 
 ### Need to know

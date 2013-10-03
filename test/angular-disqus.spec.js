@@ -141,9 +141,10 @@ describe('Angular-disqus', function() {
         var ssoCredentials;
         $disqusSsoConfig.setCredentials('token', 'pub_key');
         $disqusProvider.setShortname('shortname3');
-        $disqus.commit('test');
+        $disqus.commit('test', null, 'Short title');
 
         expect($window.disqus_shortname).toEqual('shortname3');
+        expect($window.disqus_title).toEqual('Short title');
         expect($window.disqus_identifier).toEqual('test');
         expect($window.disqus_url).toEqual($location.absUrl());
         expect($window.disqus_config).toBeDefined();
@@ -172,6 +173,24 @@ describe('Angular-disqus', function() {
 
         $disqus.commit('$location test');
         expect(data.page.url).toBe($location.absUrl());
+      }));
+      
+      it ('should reset the thread with correct title', inject(function($disqus, $window, $location) {
+        var spy  = jasmine.createSpy('reset spy');
+        var data = {
+          page : {}
+        };
+
+        $disqusProvider.setShortname('shortname');
+        $window.DISQUS = {
+          reset : function(opts) {
+            opts.config.call(data);
+          }
+        };
+
+        $disqus.commit('$location test', null, 'Short title');
+        expect(data.page.url).toBe($location.absUrl());
+        expect(data.page.title).toBe('Short title');
       }));
       
       it ('should reset the thread with url passed to commit if it was defined', inject(function($disqus, $window, $location) {
@@ -249,13 +268,19 @@ describe('Angular-disqus', function() {
       $disqus.commit = jasmine.createSpy('commit call spy');
       compileHtml('<div disqus="\'test-id\'"></div>');
 
-      expect($disqus.commit).toHaveBeenCalledWith('test-id', undefined);
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', undefined, undefined);
     }));
 
     it('should trigger commit if id is defined and pass thread url if it is defined as well', inject(function($disqus) {
       $disqus.commit = jasmine.createSpy('commit call spy');
       compileHtml('<div disqus="\'test-id\'" thread-url="thread-url"></div>');
-      expect($disqus.commit).toHaveBeenCalledWith('test-id', 'thread-url');
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', 'thread-url', undefined);
+    }));
+    
+    it('should trigger commit if id is defined and pass title', inject(function($disqus) {
+      $disqus.commit = jasmine.createSpy('commit call spy');
+      compileHtml('<div disqus="\'test-id\'" title="thread title"></div>');
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', undefined, 'thread title');
     }));
 
     it('should trigger commit if id changes', inject(function($window, $disqus, $rootScope) {
@@ -266,7 +291,7 @@ describe('Angular-disqus', function() {
       $rootScope.id = 'hello-kitty';
       $rootScope.$apply();
 
-      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty', undefined);
+      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty', undefined, undefined);
     }));
 
   });
