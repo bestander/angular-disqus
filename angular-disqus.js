@@ -103,15 +103,15 @@
 
     /**
      * Trigger the reset comment call
-     * @param  {String} $location location service
+     * @param  {String} threadUrl thread page url
      * @param  {String} id Thread id
      */
-    function resetCommit($location, id) {
+    function resetCommit(threadUrl, id) {
       window.DISQUS.reset({
         reload: true,
         config : function() {
           this.page.identifier = id;
-          this.page.url        = $location.absUrl();
+          this.page.url        = threadUrl;
         }
       });
     }
@@ -120,11 +120,11 @@
      * Adds disqus script tag to header.
      * Initializes default values for url and disqus thread id.
      *
-     * @param {Object} $location location
+     * @param {Object} threadUrl thread page url
      * @param {String} id disqus thread id
      * @param {Object} disqusSsoCredentials config for SSO
      */
-    function buildCommit($location, id, disqusSsoCredentials) {
+    function buildCommit(threadUrl, id, disqusSsoCredentials) {
       var shortname = getShortname(),
           container = getScriptContainer();
 
@@ -135,7 +135,7 @@
       }
 
       // Writes disqus global
-      setGlobals(id, $location.absUrl(), shortname, disqusSsoCredentials);
+      setGlobals(id, threadUrl, shortname, disqusSsoCredentials);
 
       // Build the script tag and append it to container
       container.appendChild(buildScriptTag(shortname));
@@ -158,16 +158,17 @@
        * If disqus was initialized earlier then it will just use disqus api to reset it
        *
        * @param  {String} id required thread id
+       * @param  {String?} threadUrl optional url for the thread, if empty disqus will use current absolute url for thread identification
        */
-      function commit(id) {
+      function commit(id, threadUrl) {
         if (!angular.isDefined(getShortname())) {
           throw new Error('No disqus shortname defined');
         } else if (!angular.isDefined(id)) {
           throw new Error('No disqus thread id defined');
         } else if (angular.isDefined(window.DISQUS)) {
-          resetCommit($location, id);
+          resetCommit(threadUrl || $location.absUrl(), id);
         } else {
-          buildCommit($location, id, $disqusSsoConfig.getCredentials());
+          buildCommit(threadUrl || $location.absUrl(), id, $disqusSsoConfig.getCredentials());
         }
       }
 
@@ -185,13 +186,14 @@
       restrict : 'AC',
       replace  : true,
       scope    : {
-        id : '=disqus'
+        id : '=disqus',
+        threadUrl: '@'
       },
       template : '<div id="disqus_thread"></div>',
       link: function link(scope, element, attr) {
         scope.$watch('id', function(id) {
           if (angular.isDefined(id)) {
-            $disqus.commit(id);
+            $disqus.commit(id, scope.threadUrl);
           }
         });
       }

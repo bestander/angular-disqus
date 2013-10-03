@@ -127,14 +127,23 @@ describe('Angular-disqus', function() {
         expect($window.disqus_identifier).toEqual('test');
         expect($window.disqus_url).toEqual($location.absUrl());
       }));
+      
+      it('should write correct url if it was provided in commit function', inject(function($disqus, $window, $location) {
+        $disqusProvider.setShortname('shortname2');
+        $disqus.commit('test2', 'http://ht.tp');
+
+        expect($window.disqus_shortname).toEqual('shortname2');
+        expect($window.disqus_identifier).toEqual('test2');
+        expect($window.disqus_url).toEqual('http://ht.tp');
+      }));
 
       it('should assign window.disqus_config a function with sso credentials if they are present', inject(function($disqus, $window, $location, $disqusSsoConfig) {
         var ssoCredentials;
         $disqusSsoConfig.setCredentials('token', 'pub_key');
-        $disqusProvider.setShortname('shortname2');
+        $disqusProvider.setShortname('shortname3');
         $disqus.commit('test');
 
-        expect($window.disqus_shortname).toEqual('shortname2');
+        expect($window.disqus_shortname).toEqual('shortname3');
         expect($window.disqus_identifier).toEqual('test');
         expect($window.disqus_url).toEqual($location.absUrl());
         expect($window.disqus_config).toBeDefined();
@@ -148,7 +157,7 @@ describe('Angular-disqus', function() {
         });
       }));
 
-      it ('should reset the thread with correct url', inject(function($disqus, $window, $location) {
+      it ('should reset the thread with correct $location url', inject(function($disqus, $window, $location) {
         var spy  = jasmine.createSpy('reset spy');
         var data = {
           page : {}
@@ -163,6 +172,23 @@ describe('Angular-disqus', function() {
 
         $disqus.commit('$location test');
         expect(data.page.url).toBe($location.absUrl());
+      }));
+      
+      it ('should reset the thread with url passed to commit if it was defined', inject(function($disqus, $window, $location) {
+        var spy  = jasmine.createSpy('reset spy');
+        var data = {
+          page : {}
+        };
+
+        $disqusProvider.setShortname('shortname');
+        $window.DISQUS = {
+          reset : function(opts) {
+            opts.config.call(data);
+          }
+        };
+
+        $disqus.commit('$location test', 'http://ht.tp');
+        expect(data.page.url).toBe('http://ht.tp');
       }));
 
       it('should reset the thread if initialized', inject(function($disqus, $window) {
@@ -223,7 +249,13 @@ describe('Angular-disqus', function() {
       $disqus.commit = jasmine.createSpy('commit call spy');
       compileHtml('<div disqus="\'test-id\'"></div>');
 
-      expect($disqus.commit).toHaveBeenCalledWith('test-id');
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', undefined);
+    }));
+
+    it('should trigger commit if id is defined and pass thread url if it is defined as well', inject(function($disqus) {
+      $disqus.commit = jasmine.createSpy('commit call spy');
+      compileHtml('<div disqus="\'test-id\'" thread-url="thread-url"></div>');
+      expect($disqus.commit).toHaveBeenCalledWith('test-id', 'thread-url');
     }));
 
     it('should trigger commit if id changes', inject(function($window, $disqus, $rootScope) {
@@ -234,7 +266,7 @@ describe('Angular-disqus', function() {
       $rootScope.id = 'hello-kitty';
       $rootScope.$apply();
 
-      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty');
+      expect($disqus.commit).toHaveBeenCalledWith('hello-kitty', undefined);
     }));
 
   });

@@ -23,9 +23,14 @@ Add comments to threads by using the ```disqus``` directive
     <!-- directive can be used as an attribute -->
     <div disqus="id"></div>
 
+    <!-- by default thread url is taken from $location service but you can override it -->
+    <div disqus="id" thread-url="https://travis-ci.org/kirstein/angular-disqus"></div>
+
     <!-- directive can be used as a class attribute -->
     <div class="disqus : id"></div>
 ```
+
+
 
 ### Need to know
 ---
